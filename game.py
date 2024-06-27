@@ -1,5 +1,5 @@
 import sys
-
+import os
 import pygame
 import random
 import math
@@ -17,7 +17,6 @@ class Game:
 
         pygame.display.set_caption("hidratate")
         self.liters = 3000
-        self.destroyed = 0
 
         self.screen = pygame.display.set_mode((640, 480))
         self.display = pygame.Surface((320, 240))
@@ -50,14 +49,33 @@ class Game:
             "water": load_image("water_bottle.png"),
             "liters": load_image("water.png"),
             "target": load_image("target.png"),
+            "phrases": load_images("tiles/phrases"),
         }
+
+        self.sfx = {
+            "jump": pygame.mixer.Sound("data/sfx/jump.wav"),
+            "dash": pygame.mixer.Sound("data/sfx/dash.wav"),
+            "sodahit": pygame.mixer.Sound("data/sfx/sodahit.wav"),
+            "machine": pygame.mixer.Sound("data/sfx/machine.wav"),
+            "ambience": pygame.mixer.Sound("data/sfx/ambience.wav"),
+            "water": pygame.mixer.Sound("data/sfx/water.wav"),
+        }
+
+        self.sfx["ambience"].set_volume(0.2)
+        self.sfx["dash"].set_volume(0.3)
+        self.sfx["sodahit"].set_volume(0.4)
+        self.sfx["machine"].set_volume(0.8)
+        self.sfx["jump"].set_volume(0.7)
+        self.sfx["water"].set_volume(0.5)
 
         self.clouds = Clouds(self.assets["clouds"], count=16)
 
         self.player = Player(self, (50, 50), (8, 15))
 
         self.tilemap = Tilemap(self, tile_size=16)
-        self.load_level(0)
+
+        self.level = 0
+        self.load_level(self.level)
         self.screenshake = 0
 
     def load_level(self, map_id):
@@ -87,22 +105,40 @@ class Game:
         self.particles = []
         self.font = pygame.font.Font(None, 20)
         self.sparks = []
+        self.score = 0
+
         self.scroll = [0, 0]
         self.dead = 0
+        self.transition = -30
+        self.destroyed = 0
 
     def run(self):
-        score = 0
+        pygame.mixer.music.load("data/music.wav")
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)
+
         score_by_bottle = self.liters / len(self.bottles)
+        print(self.assets["phrases"][1])
         while True:
             self.display.blit(self.assets["background"], (0, 0))
             self.screenshake = max(0, self.screenshake - 1)
 
+            if not len(self.bottles) and not len(self.machines):
+                self.transition += 1
+                if self.transition > 30:
+                    self.level = min(self.level + 1, len(os.listdir("data/maps")) - 1)
+                    self.load_level(self.level)
+            if self.transition < 0:
+                self.transition += 0.25
+
             if self.dead:
                 self.dead += 1
+                if self.dead >= 10:
+                    self.transition = min(30, self.transition + 1)
                 if self.dead > 40:
-                    score = 0
+                    self.score = 0
                     self.destroyed = 0
-                    self.load_level(0)
+                    self.load_level(self.level)
 
             self.scroll[0] += (
                 self.player.rect().centerx
@@ -148,8 +184,9 @@ class Game:
                 catch = bottle.update()
                 bottle.render(self.display, offset=render_scroll)
                 if catch:
+                    self.sfx["water"].play()
                     self.bottles.remove(bottle)
-                    score += score_by_bottle
+                    self.score += score_by_bottle
             if not self.dead:
                 self.player.update(
                     self.tilemap, (self.movement[1] - self.movement[0], 0)
@@ -184,6 +221,7 @@ class Game:
                     if self.player.rect().collidepoint(soda[0]):
                         self.sodas.remove(soda)
                         self.dead += 1
+                        self.sfx["sodahit"].play()
                         self.screenshake = max(16, self.screenshake)
                         for i in range(30):
                             angle = random.random() * math.pi * 2
@@ -225,7 +263,9 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
-                        self.player.jump()
+                        if self.player.jump():
+                            self.sfx["jump"].play()
+
                     if event.key == pygame.K_x:
                         self.player.dash()
                 if event.type == pygame.KEYUP:
@@ -234,16 +274,25 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
 
-            target_text = self.font.render(f"{self.destroyed}", True, (255, 255, 255))
-            score_text = self.font.render(f"{score} mL", True, (255, 255, 255))
+            if self.transition:
+                img_phrase = pygame.transform.scale(
+                    self.assets["phrases"][self.level], (320, 240)
+                )
+                self.display.blit(img_phrase, (0, 0))
+
+            else:
+                target_text = self.font.render(
+                    f"{self.destroyed}", True, (255, 255, 255)
+                )
+                score_text = self.font.render(f"{self.score} mL", True, (255, 255, 255))
+                self.display.blit(score_text, (32, 32))
+                self.display.blit(self.assets["liters"], (10, 30))
+                self.display.blit(target_text, (32, 55))
+                self.display.blit(self.assets["target"], (10, 50))
             screenshake_offset = (
                 random.random() * self.screenshake - self.screenshake / 2,
                 random.random() * self.screenshake - self.screenshake / 2,
             )
-            self.display.blit(score_text, (32, 32))
-            self.display.blit(self.assets["liters"], (10, 30))
-            self.display.blit(target_text, (32, 55))
-            self.display.blit(self.assets["target"], (10, 50))
             self.screen.blit(
                 pygame.transform.scale(self.display, self.screen.get_size()),
                 screenshake_offset,

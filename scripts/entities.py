@@ -132,6 +132,7 @@ class Machine(PhysicsEntity):
                 )
                 if abs(dis[1]) < 16:
                     if self.flip and dis[0] < 0:
+                        self.game.sfx["machine"].play()
                         self.game.sodas.append(
                             [[self.rect().centerx - 7, self.rect().centery], -1.5, 0]
                         )
@@ -145,6 +146,7 @@ class Machine(PhysicsEntity):
                             )
 
                     if not self.flip and dis[0] > 0:
+                        self.game.sfx["machine"].play()
                         self.game.sodas.append(
                             [[self.rect().centerx + 7, self.rect().centery], 1.5, 0]
                         )
@@ -164,6 +166,7 @@ class Machine(PhysicsEntity):
         if abs(self.game.player.dashing) >= 50:
             if self.rect().colliderect(self.game.player.rect()):
                 self.game.screenshake = max(16, self.game.screenshake)
+                self.game.sfx["sodahit"].play()
                 for i in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
@@ -309,6 +312,7 @@ class Player(PhysicsEntity):
 
     def dash(self):
         if not self.dashing:
+            self.game.sfx["dash"].play()
             if self.flip:
                 self.dashing = -60
             else:
