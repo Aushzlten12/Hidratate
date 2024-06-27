@@ -1,14 +1,15 @@
 import sys
 import os
 import pygame
+import asyncio
 import random
 import math
-from scripts.utils import load_image, load_images, Animation
-from scripts.entities import PhysicsEntity, Player, Machine, Water
-from scripts.tilemap import Tilemap
-from scripts.clouds import Clouds
-from scripts.particle import Particle
-from scripts.spark import Spark
+from utils import load_image, load_images, Animation
+from entities import PhysicsEntity, Player, Machine, Water
+from tilemap import Tilemap
+from clouds import Clouds
+from particle import Particle
+from spark import Spark
 
 
 class Game:
@@ -53,12 +54,12 @@ class Game:
         }
 
         self.sfx = {
-            "jump": pygame.mixer.Sound("data/sfx/jump.wav"),
-            "dash": pygame.mixer.Sound("data/sfx/dash.wav"),
-            "sodahit": pygame.mixer.Sound("data/sfx/sodahit.wav"),
-            "machine": pygame.mixer.Sound("data/sfx/machine.wav"),
-            "ambience": pygame.mixer.Sound("data/sfx/ambience.wav"),
-            "water": pygame.mixer.Sound("data/sfx/water.wav"),
+            "jump": pygame.mixer.Sound("music/jump.wav"),
+            "dash": pygame.mixer.Sound("music/dash.wav"),
+            "sodahit": pygame.mixer.Sound("music/sodahit.wav"),
+            "machine": pygame.mixer.Sound("music/machine.wav"),
+            "ambience": pygame.mixer.Sound("music/ambience.wav"),
+            "water": pygame.mixer.Sound("music/water.wav"),
         }
 
         self.sfx["ambience"].set_volume(0.2)
@@ -79,7 +80,7 @@ class Game:
         self.screenshake = 0
 
     def load_level(self, map_id):
-        self.tilemap.load("data/maps/" + str(map_id) + ".json")
+        self.tilemap.load("maps/" + str(map_id) + ".json")
         self.leaf_spawners = []
         for tree in self.tilemap.extract([("large_decor", 2)], keep=True):
             self.leaf_spawners.append(
@@ -112,13 +113,12 @@ class Game:
         self.transition = -30
         self.destroyed = 0
 
-    def run(self):
-        pygame.mixer.music.load("data/music.wav")
+    async def run(self):
+        pygame.mixer.music.load("music.wav")
         pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(-1)
 
         score_by_bottle = self.liters / len(self.bottles)
-        print(self.assets["phrases"][1])
         while True:
             self.display.blit(self.assets["background"], (0, 0))
             self.screenshake = max(0, self.screenshake - 1)
@@ -300,6 +300,4 @@ class Game:
 
             pygame.display.update()
             self.clock.tick(60)
-
-
-Game().run()
+            await asyncio.sleep(0)

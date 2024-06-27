@@ -1,0 +1,7 @@
+pygame==2.5.2
+pygbag==0.9.1
+asyncio
+os
+sys
+random
+math
