@@ -189,5 +189,5 @@ class Editor:
             await asyncio.sleep(0)
 
 
-if __name__ == "__main__":
-    asyncio.run(Editor().run())
+# if __name__ == "__main__":
+#   asyncio.run(Editor().run())

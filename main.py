@@ -111,6 +111,7 @@ class Game:
         self.sparks = []
         self.score = 0
 
+        self.score_by_bottle = self.liters / len(self.bottles)
         self.scroll = [0, 0]
         self.dead = 0
         self.transition = -30
@@ -121,7 +122,6 @@ class Game:
         pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play(-1)
 
-        score_by_bottle = self.liters / len(self.bottles)
         while True:
             self.display.blit(self.assets["background"], (0, 0))
             self.screenshake = max(0, self.screenshake - 1)
@@ -189,7 +189,7 @@ class Game:
                 if catch:
                     self.sfx["water"].play()
                     self.bottles.remove(bottle)
-                    self.score += score_by_bottle
+                    self.score += self.score_by_bottle
             if not self.dead:
                 self.player.update(
                     self.tilemap, (self.movement[1] - self.movement[0], 0)
@@ -261,20 +261,20 @@ class Game:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.movement[0] = True
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.movement[1] = True
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
                         if self.player.jump():
                             self.sfx["jump"].play()
 
-                    if event.key == pygame.K_x:
+                    if event.key == pygame.K_x or event.key == pygame.K_k:
                         self.player.dash()
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.movement[0] = False
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.movement[1] = False
 
             if self.transition:
