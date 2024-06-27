@@ -1,3 +1,5 @@
+import asyncio
+
 import sys
 
 import pygame
@@ -47,7 +49,7 @@ class Editor:
         self.shift = False
         self.ongrid = True
 
-    def run(self):
+    async def run(self):
         while True:
             self.display.fill((0, 0, 0))
 
@@ -184,6 +186,8 @@ class Editor:
             )
             pygame.display.update()
             self.clock.tick(60)
+            await asyncio.sleep(0)
 
 
-Editor().run()
+if __name__ == "__main__":
+    asyncio.run(Editor().run())
