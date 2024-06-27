@@ -17,6 +17,7 @@ class Game:
 
         pygame.display.set_caption("hidratate")
         self.liters = 3000
+        self.destroyed = 0
 
         self.screen = pygame.display.set_mode((640, 480))
         self.display = pygame.Surface((320, 240))
@@ -48,6 +49,7 @@ class Game:
             "soda": load_image("soda.png"),
             "water": load_image("water_bottle.png"),
             "liters": load_image("water.png"),
+            "target": load_image("target.png"),
         }
 
         self.clouds = Clouds(self.assets["clouds"], count=16)
@@ -56,6 +58,7 @@ class Game:
 
         self.tilemap = Tilemap(self, tile_size=16)
         self.load_level(0)
+        self.screenshake = 0
 
     def load_level(self, map_id):
         self.tilemap.load("data/maps/" + str(map_id) + ".json")
@@ -92,10 +95,13 @@ class Game:
         score_by_bottle = self.liters / len(self.bottles)
         while True:
             self.display.blit(self.assets["background"], (0, 0))
+            self.screenshake = max(0, self.screenshake - 1)
 
             if self.dead:
                 self.dead += 1
                 if self.dead > 40:
+                    score = 0
+                    self.destroyed = 0
                     self.load_level(0)
 
             self.scroll[0] += (
@@ -136,10 +142,14 @@ class Game:
                 machine.render(self.display, offset=render_scroll)
                 if kill:
                     self.machines.remove(machine)
+                    self.destroyed += 1
 
             for bottle in self.bottles.copy():
+                catch = bottle.update()
                 bottle.render(self.display, offset=render_scroll)
-
+                if catch:
+                    self.bottles.remove(bottle)
+                    score += score_by_bottle
             if not self.dead:
                 self.player.update(
                     self.tilemap, (self.movement[1] - self.movement[0], 0)
@@ -174,6 +184,7 @@ class Game:
                     if self.player.rect().collidepoint(soda[0]):
                         self.sodas.remove(soda)
                         self.dead += 1
+                        self.screenshake = max(16, self.screenshake)
                         for i in range(30):
                             angle = random.random() * math.pi * 2
                             speed = random.random() * 5
@@ -223,11 +234,19 @@ class Game:
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
 
-            score_text = self.font.render(f"{score}", True, (255, 255, 255))
+            target_text = self.font.render(f"{self.destroyed}", True, (255, 255, 255))
+            score_text = self.font.render(f"{score} mL", True, (255, 255, 255))
+            screenshake_offset = (
+                random.random() * self.screenshake - self.screenshake / 2,
+                random.random() * self.screenshake - self.screenshake / 2,
+            )
             self.display.blit(score_text, (32, 32))
             self.display.blit(self.assets["liters"], (10, 30))
+            self.display.blit(target_text, (32, 55))
+            self.display.blit(self.assets["target"], (10, 50))
             self.screen.blit(
-                pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)
+                pygame.transform.scale(self.display, self.screen.get_size()),
+                screenshake_offset,
             )
 
             pygame.display.update()

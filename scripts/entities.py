@@ -88,10 +88,18 @@ class PhysicsEntity:
 class Water:
     def __init__(self, game, pos, size):
         self.game = game
-        self.pos = pos
+        self.pos = list(pos)
         self.size = size
         self.type = "water"
         self.img = game.assets["water"]
+
+    def rect(self):
+        return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+
+    def update(self):
+        if self.rect().colliderect(self.game.player.rect()):
+            return True
+        return False
 
     def render(self, surf, offset=(0, 0)):
         surf.blit(
@@ -155,6 +163,7 @@ class Machine(PhysicsEntity):
 
         if abs(self.game.player.dashing) >= 50:
             if self.rect().colliderect(self.game.player.rect()):
+                self.game.screenshake = max(16, self.game.screenshake)
                 for i in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
@@ -208,7 +217,10 @@ class Player(PhysicsEntity):
         self.air_time += 1
 
         if self.air_time > 120:
+            if not self.game.dead:
+                self.game.screenshake = max(16, self.game.screenshake)
             self.game.dead += 1
+
         if self.collisions["down"]:
             self.air_time = 0
             self.jumps = 1
