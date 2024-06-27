@@ -117,8 +117,8 @@ class Game:
         self.destroyed = 0
 
     async def run(self):
-        pygame.mixer.music.load("music.wav")
-        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.load("music.ogg")
+        pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play(-1)
 
         score_by_bottle = self.liters / len(self.bottles)
